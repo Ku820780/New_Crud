@@ -73,9 +73,9 @@ const product_delete_all = (req, res) => {
 
 const product_update = (req, res) => {
   try {
-    const data = req.body; // Data to update
-    const pid = req.params.pid; // Product ID
-    const sql = `UPDATE product SET ? WHERE pid = ?`; // Corrected SQL query syntax
+    const data = req.body; 
+    const pid = req.params.pid; 
+    const sql = `UPDATE product SET ? WHERE pid = ?`;
     db.query(sql,[data,pid], (err, result) => {
         if (err) {
           res.status(404).json({ error: err });
