@@ -5,7 +5,7 @@ import Form from "react-bootstrap/Form";
 import axios from "axios";
 import { USER_API_END_POINT } from "../../utils/EndPonts.js";
 import { Link, useNavigate } from "react-router-dom";
-import swal from "sweetalert"
+import Swal from "sweetalert"
 const Signup = () => {
   const [input, setInput] = useState({
     uid: "",
@@ -28,14 +28,12 @@ const Signup = () => {
       .then((res) => {
        console.log(res)
        navigate("/login")
-       alert("Register SuccessFully")
+       Swal("Register SuccessFully")
       }).catch((err)=>{
         console.log(err)
       })
       .catch((error) => {
-        console.log("Full error object:", error);
-        const errorMessage = error.response?.data?.message || "Registration failed";
-        swal("Error", errorMessage, "error");
+        console.log(error)
       });
   };
   

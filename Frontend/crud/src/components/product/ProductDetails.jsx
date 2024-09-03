@@ -7,6 +7,7 @@ import { PRODUCT_API_END_POINT } from "../../utils/EndPonts";
 import Dropdown from "react-bootstrap/Dropdown";
 import ProductSearch from "./SearchProduct";
 import Pagination from "react-bootstrap/Pagination";
+import Swal from 'sweetalert'
 
 function ProductDetails() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ function ProductDetails() {
     axios
       .delete(`${PRODUCT_API_END_POINT}/delete/${pid}`)
       .then((res) => {
-        alert("Deleted Successfully");
+        Swal("Deleted Successfully");
         fetchdata(); // Refresh data after deletion
       })
       .catch((err) => console.log(err));

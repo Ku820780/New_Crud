@@ -5,6 +5,7 @@ import Form from "react-bootstrap/Form";
 import axios from "axios";
 import { PRODUCT_API_END_POINT } from "../../utils/EndPonts";
 import { useNavigate } from "react-router-dom";
+import Swal from 'sweetalert'
 
 function AddProduct() {
     const [input, setInput] = useState({
@@ -24,7 +25,7 @@ function AddProduct() {
         .then((res)=>{
             console.log(res)
             naviagte("/")
-            alert("Product Add SuccessFully...")
+            Swal("Product Add SuccessFully...")
         }).catch((err)=>{
             console.log(err)
         })

@@ -5,6 +5,7 @@ import Form from "react-bootstrap/Form";
 import axios from "axios";
 import { PRODUCT_API_END_POINT } from "../../utils/EndPonts";
 import { useNavigate, useParams } from "react-router-dom";
+import Swal from 'sweetalert'
 
 function UpdateProduct() {
   const params = useParams();
@@ -28,7 +29,7 @@ function UpdateProduct() {
       .put(`${PRODUCT_API_END_POINT}/update/${params.pid}`, input) // Corrected params.p_id to params.pid
       .then((res) => {
         console.log(res);
-        alert("Product Updated Successfully...");
+        Swal("Product Updated Successfully...");
         navigate("/"); // Uncommented the navigate function
       })
       .catch((err) => {
