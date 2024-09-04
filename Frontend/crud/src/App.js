@@ -3,7 +3,6 @@ import Home from './components/Home';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import AddProduct from './components/product/AddProduct';
-import UpdateProduct from './components/product/UpdateProduct';
 
 const appRouter = createBrowserRouter([
   {
@@ -18,9 +17,6 @@ const appRouter = createBrowserRouter([
   },{
     path:"/addproduct",
     element:<AddProduct />
-  },{
-    path:"/productUpdate/:pid",
-    element:<UpdateProduct />
   }
 ])
 function App() {

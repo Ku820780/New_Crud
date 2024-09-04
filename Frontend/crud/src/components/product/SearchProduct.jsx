@@ -13,13 +13,18 @@ const ProductSearch = () => {
     e.preventDefault();
     setProducts([]);
     setError("");
+
+    const queryParam = isNaN(searchTerm) ? { p_name: searchTerm } : { pid: searchTerm };
+
     axios
-      .get(`${PRODUCT_API_END_POINT}/search/${searchTerm}`)
+      .get(`${PRODUCT_API_END_POINT}/search`, {
+        params: queryParam,
+      })
       .then((res) => {
         if (res.data.products && res.data.products.length > 0) {
           setProducts(res.data.products);
         } else {
-          setError("No products found with the given name");
+          setError("No products found with the given name or ID");
         }
       })
       .catch((err) => {
@@ -32,16 +37,16 @@ const ProductSearch = () => {
     <div>
       <Form onSubmit={handleSearch}>
         <Form.Group className="mb-3" controlId="formBasicEmail">
-          <div style={{display:"flex"}}>
+          <div style={{ display: "flex" }}>
             <div>
               <Form.Control
                 type="text"
-                placeholder="Enter product name"
+                placeholder="Enter product name or ID"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div style={{marginLeft:"10px"}}>
+            <div style={{ marginLeft: "10px" }}>
               <Button type="submit">Search</Button>
             </div>
           </div>
