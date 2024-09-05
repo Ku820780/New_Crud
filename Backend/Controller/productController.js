@@ -98,72 +98,45 @@ const product_update = async (req, res) => {
 };
 
 
-
-const product_search_by_name = async (req, res) => {
+const product_page_api = async(req, res) => {
   try {
-    const { p_name, pid } = req.query;
-    let sql = 'SELECT * FROM product WHERE 1=1';
-    const queryParams = [];
+    const { page = 1, limit = 10, search = "", sortBy = "p_name", order = "ASC" } = req.query;
+    const offset = (page - 1) * limit;
+    
+    // Construct the base query with pagination, search, and sorting
+    const searchQuery = `%${search}%`;
+    const [data] = await db.query(
+      `SELECT * FROM product 
+       WHERE p_name LIKE ? OR p_description LIKE ? 
+       ORDER BY ?? ${order} 
+       LIMIT ? OFFSET ?`, 
+      [searchQuery, searchQuery, sortBy, +limit, +offset]
+    );
 
-    if (p_name) {
-      sql += ' AND p_name LIKE ?';
-      queryParams.push(`%${p_name}%`);
-    }
-
-    if (pid) {
-      sql += ' AND pid = ?';
-      queryParams.push(pid);
-    }
-
-  
-    const [result] = await db.query(sql, queryParams);
-
-    if (result.length === 0) {
-      console.log("No product found with the given criteria");
-      return res.status(404).json({ message: "No product found with the given criteria" });
-    }
-
-    console.log("Product(s) retrieved successfully");
-    return res.status(200).json({ products: result });
-
+    const [totalPageData] = await db.query('SELECT COUNT(*) AS count FROM product WHERE p_name LIKE ? OR p_description LIKE ?', [searchQuery, searchQuery]);
+    
+    const totalPage = Math.ceil(+totalPageData[0]?.count / limit);
+    
+    res.json({
+      data: data,
+      pagination: {
+        page: +page,
+        limit: +limit,
+        totalPage,
+      },
+    });
   } catch (error) {
-    console.log("Internal server error:", error);
-    return res.status(500).json({ error: "Internal server error", details: error.message });
+    console.log(error);
+    res.status(500).json({ message: "Error fetching data" });
   }
 };
 
-
-
-const product_page_api = async(req, res) => {
-  try {
-    const {page, limit} = req.query
-    const offset = (page - 1) * limit
-    const [data] = await db.query('Select * from product limit ? offset ?', [+limit, +offset])
-
-    const [totalPageData] = await db.query('SELECT count(*) as count from product')
-
-    const totalPage = Math.ceil(+totalPageData[0]?.count / limit)
-
-    // console.log(totalPage)
-    res.json({
-      data:data,
-      pagination:{
-        page: +page,
-        limit: +limit,
-        totalPage
-      }
-    })
-  } catch (error) {
-    console.log(error)
-  }
-}
 
 module.exports = {
   product_post,
   product_get,
   product_delete,
   product_update,
-  product_search_by_name,
   get_product_byId,
   product_page_api
 };

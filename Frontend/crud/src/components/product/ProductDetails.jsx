@@ -9,11 +9,10 @@ import Pagination from "react-bootstrap/Pagination";
 import Swal from "sweetalert";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
-import SearchProduct from "./SearchProduct.jsx"
+import { Loader2 } from "lucide-react";
+import { InputGroup, FormControl } from "react-bootstrap";
 
 function ProductDetails() {
- 
-
   const [modalShow, setModalShow] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [view, setView] = useState([]);
@@ -24,12 +23,23 @@ function ProductDetails() {
   const [p_name, setPName] = useState("");
   const [p_description, setPDescription] = useState("");
   const [p_price, setPPrice] = useState("");
+  const [loading, setLoading] = useState(false); // Loading state
 
-  // Fetch data with pagination
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortField, setSortField] = useState("p_name");
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  // Fetch data with pagination, search, and sorting
   const fetchdata = (page = 1) => {
     axios
       .get(`${PRODUCT_API_END_POINT}/get/product/page`, {
-        params: { page, limit: itemsPerPage },
+        params: {
+          page,
+          limit: itemsPerPage,
+          search: searchTerm,
+          sortField,
+          sortOrder,
+        },
       })
       .then((res) => {
         setView(res.data.data);
@@ -43,7 +53,7 @@ function ProductDetails() {
 
   useEffect(() => {
     fetchdata(currentPage);
-  }, [currentPage]);
+  }, [currentPage, searchTerm, sortField, sortOrder]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -54,7 +64,6 @@ function ProductDetails() {
     axios
       .get(`${PRODUCT_API_END_POINT}/get/productbyId/${pid}`)
       .then((res) => {
-        console.log(res);
         const product = res?.data?.result[0];
         setPName(product.p_name);
         setPDescription(product.p_description);
@@ -64,23 +73,26 @@ function ProductDetails() {
   };
 
   // Handle product update
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent the default form submission
-    axios
-      .put(`${PRODUCT_API_END_POINT}/update/${selectedProduct}`, {
+    setLoading(true); // Start loading
+
+    try {
+      await axios.put(`${PRODUCT_API_END_POINT}/update/${selectedProduct}`, {
         p_name,
         p_description,
         p_price,
-      })
-      .then((res) => {
-        console.log(res);
-        Swal("Product Updated Successfully...");
-        setModalShow(false); // Close the modal after successful update
-        fetchdata(currentPage); // Refresh the data
-      })
-      .catch((err) => {
-        console.error("Update failed:", err);
       });
+
+      Swal("Product Updated Successfully...", "", "success");
+      setModalShow(false); // Close the modal after a successful update
+      fetchdata(currentPage); // Refresh the data
+    } catch (err) {
+      console.error("Update failed:", err);
+      Swal("Failed to update product", "", "error");
+    } finally {
+      setLoading(false); // End loading
+    }
   };
 
   // Delete function
@@ -89,8 +101,7 @@ function ProductDetails() {
       .delete(`${PRODUCT_API_END_POINT}/delete/${pid}`)
       .then((res) => {
         fetchdata(currentPage);
-        fetchProductDetails();
-        Swal("Product Delete SuccessFully...");
+        Swal("Product Deleted Successfully...");
       })
       .catch((err) => {
         console.log(err);
@@ -104,14 +115,25 @@ function ProductDetails() {
     setModalShow(true);
   };
 
-
- 
+  // Sorting functionality
+  const handleSort = (field) => {
+    const newOrder = sortOrder === "asc" ? "desc" : "asc";
+    setSortField(field);
+    setSortOrder(newOrder);
+  };
 
   return (
     <div>
       <div style={{ display: "flex", marginLeft: "100px", marginTop: "50px" }}>
         <div>
-        <SearchProduct />
+          {/* Search input */}
+          <InputGroup className="mb-3">
+            <FormControl
+              placeholder="Search Product by Name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </InputGroup>
         </div>
         <div style={{ marginLeft: "1200px" }}>
           <Link to="/addproduct">
@@ -131,9 +153,17 @@ function ProductDetails() {
           <thead>
             <tr>
               <th>Product Id</th>
-              <th>Product Name</th>
+              <th>
+                <Button variant="link" onClick={() => handleSort("p_name")}>
+                  Product Name {sortField === "p_name" && (sortOrder === "asc" ? "↑" : "↓")}
+                </Button>
+              </th>
               <th>Product Description</th>
-              <th>Product Price</th>
+              <th>
+                <Button variant="link" onClick={() => handleSort("p_price")}>
+                  Product Price {sortField === "p_price" && (sortOrder === "asc" ? "↑" : "↓")}
+                </Button>
+              </th>
               <th>Action</th>
             </tr>
           </thead>
@@ -190,66 +220,68 @@ function ProductDetails() {
         </Pagination>
 
         {/* Product Update Modal */}
-        <div>
-          <Modal show={modalShow} onHide={() => setModalShow(false)}>
-            <Modal.Header closeButton>
-              <Modal.Title>Update Product</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Product Id</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={selectedProduct || ""}
-                    readOnly
-                  />
-                </Form.Group>
+        <Modal show={modalShow} onHide={() => setModalShow(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Update Product</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form onSubmit={handleSubmit}>
+              <Form.Group className="mb-3">
+                <Form.Label>Product Id</Form.Label>
+                <Form.Control type="text" value={selectedProduct || ""} readOnly />
+              </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Product Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Product Name"
-                    onChange={(e) => setPName(e.target.value)}
-                    value={p_name}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Product Description</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Product Description"
-                    onChange={(e) => setPDescription(e.target.value)}
-                    value={p_description}
-                  />
-                </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Product Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Product Name"
+                  onChange={(e) => setPName(e.target.value)}
+                  value={p_name}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Product Description</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Product Description"
+                  onChange={(e) => setPDescription(e.target.value)}
+                  value={p_description}
+                />
+              </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Product Price</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Enter Product Price"
-                    onChange={(e) => setPPrice(e.target.value)}
-                    value={p_price}
-                  />
-                </Form.Group>
-                <Button
-                  variant="primary"
-                  type="submit"
-                  style={{ width: "100%" }}
-                >
-                  Update
-                </Button>
-              </Form>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setModalShow(false)}>
-                Close
+              <Form.Group className="mb-3">
+                <Form.Label>Product Price</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter Product Price"
+                  onChange={(e) => setPPrice(e.target.value)}
+                  value={p_price}
+                />
+              </Form.Group>
+
+              <Button
+                type="submit"
+                style={{ width: "100%", marginTop: "40px", marginBottom: "40px" }}
+                disabled={loading} // Disable button when loading
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Please Wait...
+                  </>
+                ) : (
+                  "Update"
+                )}
               </Button>
-            </Modal.Footer>
-          </Modal>
-        </div>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setModalShow(false)}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </div>
   );
